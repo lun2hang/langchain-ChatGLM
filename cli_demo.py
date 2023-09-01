@@ -1,6 +1,9 @@
+import os
+# set NUMEXPR_MAX_THREADS
+os.environ['NUMEXPR_MAX_THREADS'] = '16'
+
 from configs.model_config import *
 from chains.local_doc_qa import LocalDocQA
-import os
 import nltk
 from models.loader.args import parser
 import models.shared as shared
@@ -9,6 +12,7 @@ nltk.data.path = [NLTK_DATA_PATH] + nltk.data.path
 
 # Show reply with source text from input document
 REPLY_WITH_SOURCE = True
+
 
 
 def main():

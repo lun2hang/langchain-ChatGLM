@@ -198,7 +198,7 @@ class LocalDocQA:
                     vs_path = os.path.join(KB_ROOT_PATH,
                                            f"""{"".join(lazy_pinyin(os.path.splitext(file)[0]))}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}""",
                                            "vector_store")
-                vector_store = MyFAISS.from_documents(docs, self.embeddings)  # docs 为Document列表
+                vector_store = MyFAISS.from_documents(docs, self.embeddings )  # docs 为Document列表
                 torch_gc()
 
             vector_store.save_local(vs_path)
