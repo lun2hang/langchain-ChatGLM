@@ -4,11 +4,22 @@ from langchain.vectorstores.faiss import dependable_faiss_import
 from typing import Any, Callable, List, Dict
 from langchain.docstore.base import Docstore
 from langchain.docstore.document import Document
+from langchain.vectorstores.utils import DistanceStrategy, maximal_marginal_relevance
 import numpy as np
 import copy
 import os
 from configs.model_config import *
 
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sized,
+    Tuple,
+)
 
 class MyFAISS(FAISS, VectorStore):
     def __init__(
@@ -18,6 +29,7 @@ class MyFAISS(FAISS, VectorStore):
             docstore: Docstore,
             index_to_docstore_id: Dict[int, str],
             normalize_L2: bool = False,
+            distance_strategy: DistanceStrategy = DistanceStrategy.EUCLIDEAN_DISTANCE,
     ):
         super().__init__(embedding_function=embedding_function,
                          index=index,
@@ -44,7 +56,12 @@ class MyFAISS(FAISS, VectorStore):
         return lists
 
     def similarity_search_with_score_by_vector(
-            self, embedding: List[float], k: int = 4
+            self, 
+            embedding: List[float], 
+            k: int = 4, 
+            filter: Optional[Dict[str, Any]] = None,
+            fetch_k: int = 20,
+            **kwargs: Any,
     ) -> List[Document]:
         faiss = dependable_faiss_import()
         vector = np.array([embedding], dtype=np.float32)
@@ -56,7 +73,7 @@ class MyFAISS(FAISS, VectorStore):
         store_len = len(self.index_to_docstore_id)
         rearrange_id_list = False
         for j, i in enumerate(indices[0]):
-            if i == -1 or 0 < self.score_threshold < scores[0][j]:
+            if i == -1 or self.score_threshold < scores[0][j]:
                 # This happens when not enough docs are returned.
                 continue
             if i in self.index_to_docstore_id:

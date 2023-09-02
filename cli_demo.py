@@ -28,8 +28,10 @@ def main():
     vs_path = None
     while not vs_path:
         print("注意输入的路径是完整的文件路径，例如knowledge_base/`knowledge_base_id`/content/file.md，多个路径用英文逗号分割")
-        filepath = input("Input your local knowledge file path 请输入本地知识文件路径：")
-        
+# 为了测试速度写死
+#        filepath = input("Input your local knowledge file path 请输入本地知识文件路径：")
+
+        filepath = "/workspace/chatpdf/langchain-ChatGLM/knowledge_base/samples/upload_lun/xajh.pdf"
         # 判断 filepath 是否为空，如果为空的话，重新让用户输入,防止用户误触回车
         if not filepath:
             continue
