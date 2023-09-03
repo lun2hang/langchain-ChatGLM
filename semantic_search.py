@@ -65,8 +65,8 @@ def write_check_file(filepath, docs):
 docs = load_file(filepath, sentence_size = SENTENCE_SIZE)
 
 #加载向量库
-#初始化预训练语言模型sentence transformer，使用上面配置的embedding
-embeddings = HuggingFaceEmbeddings(model_name=embedding_model_dict[EMBEDDING_MODEL],
+#初始化sentence transformer（推理用而非存储推理结果），使用上面配置的预训练语言模型
+embedder = HuggingFaceEmbeddings(model_name=embedding_model_dict[EMBEDDING_MODEL],
                                    model_kwargs={'device': EMBEDDING_DEVICE})
 #是否使用已生成向量索引库
 vs_path = ""
@@ -75,7 +75,7 @@ if len(docs) > 0:
     logger.info("文件加载完毕，正在生成向量库")
     if vs_path and os.path.isdir(vs_path) and "index.faiss" in os.listdir(vs_path):
         #从路径加载索引
-        vector_store = FAISS.load_local(vs_path, embeddings)
+        vector_store = FAISS.load_local(vs_path, embedder)
         vector_store.add_documents(docs)
     else:
         if not vs_path:
@@ -85,7 +85,7 @@ if len(docs) > 0:
                                     f"""{"".join(lazy_pinyin(os.path.splitext(filepath)[0]))}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}""",
                                     "vector_store")
         #从文件建立索引
-        vector_store = FAISS.from_documents(docs, embeddings )  # docs 为Document列表
+        vector_store = FAISS.from_documents(docs, embedder)  # docs 为Document列表
         #并保存索引
         vector_store.save_local(vs_path)
 else:
