@@ -94,7 +94,6 @@ else:
 #搜索查询
 query = "林平之"
 
-vector_store = FAISS.load_local(vs_path, embedder)
 vector_store.chunk_size = 100
 vector_store.chunk_conent = 250
 vector_store.score_threshold = 700
