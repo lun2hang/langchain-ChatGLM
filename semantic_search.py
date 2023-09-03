@@ -28,11 +28,14 @@ EMBEDDING_MODEL = "text2vec-large-chinese"
 # Embedding running device
 EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
+
+#是否使用预先生成向量索引库，如配置使用预先的建库，文件路径将被忽略；如不配置，使用文件路径建库
+#vs_path = ""
+vs_path = "/workspace/chatpdf/langchain-ChatGLM/knowledge_base/samples/upload_lun/xajh_FAISS_20230903_153454/vector_store"
 #输入文件
 filepath = "/workspace/chatpdf/langchain-ChatGLM/knowledge_base/samples/upload_lun/xajh.pdf"
 #文本分句长度每行大于100时触发再截断
 SENTENCE_SIZE = 100
-#
 def load_file(filepath, sentence_size=SENTENCE_SIZE):
     if filepath.lower().endswith(".txt"):
         loader = TextLoader(filepath, autodetect_encoding=True)
@@ -61,41 +64,36 @@ def write_check_file(filepath, docs):
             fout.write(str(i))
             fout.write('\n')
         fout.close()
-#文件加载如doc类
-docs = load_file(filepath, sentence_size = SENTENCE_SIZE)
 
-#加载向量库
 #初始化sentence transformer（推理用而非存储推理结果），使用上面配置的预训练语言模型
 embedder = HuggingFaceEmbeddings(model_name=embedding_model_dict[EMBEDDING_MODEL],
                                    model_kwargs={'device': EMBEDDING_DEVICE})
-#是否使用已生成向量索引库
-vs_path = ""
-#使用emb建向量库
-if len(docs) > 0:
-    logger.info("文件加载完毕，正在生成向量库")
-    if vs_path and os.path.isdir(vs_path) and "index.faiss" in os.listdir(vs_path):
-        #从路径加载索引
-        vector_store = FAISS.load_local(vs_path, embedder)
-        vector_store.add_documents(docs)
-    else:
-        if not vs_path:
-            # 知识库默认存储路径
-            KB_ROOT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base")
-            vs_path = os.path.join(KB_ROOT_PATH,
-                                    f"""{"".join(lazy_pinyin(os.path.splitext(filepath)[0]))}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}""",
-                                    "vector_store")
-        #从文件建立索引
-        vector_store = FAISS.from_documents(docs, embedder)  # docs 为Document列表
-        #并保存索引
-        vector_store.save_local(vs_path)
+
+#使用embber 和faiss 建向量库   
+if vs_path and os.path.isdir(vs_path) and "index.faiss" in os.listdir(vs_path):
+    logger.info("正在使用已建索引文件，生成向量库")
+    #从路径加载索引
+    vector_store = FAISS.load_local(vs_path, embedder)
 else:
-    logger.info("文件未成功加载")
+    logger.info("正在使用输入文件，生成向量库")
+    if not vs_path:
+        # 知识库默认存储路径
+        KB_ROOT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base")
+        vs_path = os.path.join(KB_ROOT_PATH,
+                                f"""{"".join(lazy_pinyin(os.path.splitext(filepath)[0]))}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}""",
+                                "vector_store")
+    #从文件建立索引
+    docs = load_file(filepath, sentence_size = SENTENCE_SIZE)   
+    vector_store = FAISS.from_documents(docs, embedder)  # docs 为Document列表
+    #并保存索引
+    vector_store.save_local(vs_path)
 
 #搜索查询
-query = "林平之"
-
-vector_store.chunk_size = 100
-vector_store.chunk_conent = 250
-vector_store.score_threshold = 700
-
-related_docs_with_score = vector_store.similarity_search_with_score(query, k = 4)
+while True:
+    query = input("Input your question 请输入问题：")
+#    query = "林平之"
+    vector_store.chunk_size = 100
+    vector_store.score_threshold = 700  
+    related_docs_with_score = vector_store.similarity_search_with_score(query, k = 4)
+    context = "\n".join([doc.page_content for doc , _ in related_docs_with_score])
+    logger.info("query: %s \n result: %s\n" %(query, context))
