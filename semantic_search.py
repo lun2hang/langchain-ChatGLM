@@ -90,3 +90,13 @@ if len(docs) > 0:
         vector_store.save_local(vs_path)
 else:
     logger.info("文件未成功加载")
+
+#搜索查询
+query = "林平之"
+
+vector_store = FAISS.load_local(vs_path, embedder)
+vector_store.chunk_size = 100
+vector_store.chunk_conent = 250
+vector_store.score_threshold = 700
+
+related_docs_with_score = vector_store.similarity_search_with_score(query, k = 4)
