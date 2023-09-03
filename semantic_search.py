@@ -26,7 +26,7 @@ EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backe
 #使用未分割文件建库
 #输入文件
 filepath = "/workspace/chatpdf/langchain-ChatGLM/knowledge_base/samples/upload_lun/xajh.pdf"
-#文本分句长度
+#文本分句长度每行大于100时触发再截断
 SENTENCE_SIZE = 100
 #
 def load_file(filepath, sentence_size=SENTENCE_SIZE):
